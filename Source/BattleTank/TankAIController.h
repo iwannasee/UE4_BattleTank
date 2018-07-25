@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "Tank.h"
-#include "Engine/World.h"
 #include "TankAIController.generated.h"
 
+
+//Forward Declaration
+class ATank;
+class UWorld;
 /**
  * 
  */
@@ -21,7 +23,4 @@ public:
 
 	virtual void BeginPlay() override;
 
-	ATank* GetAIControlledTank() const;
-
-	ATank* GetPlayerTank() const;
 };

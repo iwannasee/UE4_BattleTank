@@ -1,6 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
+
 #include "../Public/TankAimingComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/ActorComponent.h"
+#include "TankTurret.h"
+#include"Public/TankBarrel.h"
+#include "Engine/World.h"
+#include "Classes/Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/GameFramework/Actor.h"
 
 
@@ -49,6 +57,9 @@ void UTankAimingComponent::AimAt(FVector HitLocation, float LaunchSpeed) const
 		StartLocation,
 		HitLocation,
 		LaunchSpeed,
+		false,
+		0,
+		0,
 		ESuggestProjVelocityTraceOption::DoNotTrace	
 	);
 
@@ -57,18 +68,41 @@ void UTankAimingComponent::AimAt(FVector HitLocation, float LaunchSpeed) const
 	{
 		auto AimDirection = OutLaunchVelocity.GetSafeNormal();
 		MoveBarrelTowards(AimDirection);
+	} else{
+		auto Time = GetWorld()->GetTimeSeconds();
+		UE_LOG(LogTemp, Warning, TEXT(" %f cannot find any solution"), Time);
 	}
 }
 
-void UTankAimingComponent::SetBarrelReference(UStaticMeshComponent * BarrelToSet)
+void UTankAimingComponent::SetBarrelReference(UTankBarrel * BarrelToSet)
 {
 	this->Barrel = BarrelToSet;
+}
+
+void UTankAimingComponent::SetTurretReference(UTankTurret * TurretToSet)
+{
+	this->Turret = TurretToSet;
 }
 
 void UTankAimingComponent::MoveBarrelTowards(FVector AimDir) const
 {
 	auto BarrelRotation = Barrel->GetForwardVector().Rotation();
 	auto AimAsRotator = AimDir.Rotation();
-	UE_LOG(LogTemp, Warning, TEXT("Aim As Rot: %s"), *AimAsRotator.ToString())
+	auto BarrelDeltaRotator = AimAsRotator - BarrelRotation;
+	//UE_LOG(LogTemp, Warning, TEXT("Aim As Rot: %s"), *AimAsRotator.ToString());
+
+	Barrel->EleVate(BarrelDeltaRotator.Pitch);
+	
+	//TODO FIX the barrel from trembling
+	Turret->Rotate(BarrelDeltaRotator.Yaw);
+	//	if (!FMath::IsNearlyEqual(BarrelDeltaRotator.Yaw, 0, 3)) {
+
+
+
+	//UE_LOG(LogTemp, Warning, TEXT("new rotation of barrel: %s"), *BarrelRotation.ToString());
+
+
+
+	
 }
 
