@@ -26,7 +26,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void Launch(float speed);
 private:
-	UPROPERTY(EditAnywhere, Category = Setup)
+	UPROPERTY(EditDefaultsOnly, Category = Setup)
 	UProjectileMovementComponent * ProjectileMovementComponent = nullptr;
 	
 	

@@ -6,6 +6,7 @@
 #include "TankTurret.h"
 #include "Public/TankAimingComponent.h"
 #include "Public/TankBarrel.h"
+#include "TankMovementComponent.h"
 
 // Sets default values
 ATank::ATank()
@@ -15,7 +16,6 @@ ATank::ATank()
 
 	//No need to protect pointers as added at construction
 	TankAimComponent = CreateDefaultSubobject<UTankAimingComponent>(FName("Aiming Component"));
-	
 }
 
 
@@ -73,7 +73,8 @@ void ATank::Fire()
 		
 	bool isReloaded = (FPlatformTime::Seconds() - LastFireTime) > ReloadTimeInSeconds;
 	UE_LOG(LogTemp, Warning, TEXT("FIRE!!!!!"));
-	if (Barrel && isReloaded ) {
+	if(!ProjectileBlueprint){ UE_LOG(LogTemp, Warning, TEXT("Fired but there was no projectile")); }
+	if (Barrel && isReloaded && bCanShoot) {
 
 		//Spawn Projectile At socket location
 		auto Projectile = GetWorld()->SpawnActor<AProjectile>(
