@@ -8,9 +8,14 @@
 //Forward Declaration
 class UTankBarrel;
 class UTankTurret;
-class UStaticMeshComponent;
-class UActorComponent;
-class GameplayStatics;
+
+//Enum for aim crosshair status
+UENUM()
+enum class EFiringStatus : uint8 {
+	RELOADING,
+	AIMING,
+	LOCKING
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BATTLETANK_API UTankAimingComponent : public UActorComponent
@@ -22,26 +27,23 @@ public:
 	// Sets default values for this component's properties
 	UTankAimingComponent();
 
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-
-	void AimAt(FVector HitLocation, float LaunchSpeed) const;
-	void SetBarrelReference(UTankBarrel* BarrelToSet);
-	void SetTurretReference(UTankTurret* TurretToSet);
-	//SetTurretReference
-
-
-
+	void AimAt(FVector HitLocation) const;
 
 protected:
+	UPROPERTY(BlueprintReadOnly)
+	EFiringStatus FiringStatus = EFiringStatus::LOCKING;
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-
 private:
+	UFUNCTION(BlueprintCallable, Category = Setup)
+	void AimingInitialise(UTankTurret* TurretToSet, UTankBarrel* BarrelToSet);
 	void MoveBarrelTowards(FVector AimDir) const;
-	UTankBarrel *Barrel = nullptr;
+	UTankBarrel* Barrel = nullptr;
 	UTankTurret* Turret = nullptr;
-	
+
+	//TODO remove after aiming component is removed
+	UPROPERTY(EditDefaultsOnly, Category = Firing)
+	float LaunchSpeed = 7000.f;
+
 };

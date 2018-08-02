@@ -1,16 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
-
-#include "../Public/TankAimingComponent.h"
-#include "Components/StaticMeshComponent.h"
-#include "Components/ActorComponent.h"
+#include "TankAimingComponent.h"
+#include "Engine.h"
+#include "BattleTank.h"
 #include "TankTurret.h"
 #include"Public/TankBarrel.h"
+
+#include "Runtime/Engine/Classes/Components/ActorComponent.h"
 #include "Engine/World.h"
 #include "Classes/Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/GameFramework/Actor.h"
-
 
 
 // Sets default values for this component's properties
@@ -18,7 +17,7 @@ UTankAimingComponent::UTankAimingComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 	// ...
 }
 
@@ -27,29 +26,17 @@ UTankAimingComponent::UTankAimingComponent()
 void UTankAimingComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 	// ...
-	
+
 }
 
-
-// Called every frame
-void UTankAimingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
-
-void UTankAimingComponent::AimAt(FVector HitLocation, float LaunchSpeed) const
+void UTankAimingComponent::AimAt(FVector HitLocation) const
 {
 	if (!Barrel) { return; }
 	
 	FVector OutLaunchVelocity;
 	FVector StartLocation = Barrel->GetSocketLocation(FName("Projectile"));
-	
-
-	auto TankName = GetOwner()->GetName();
+	TArray < AActor * > ActorsToIgnore;
 	bool bHaveAimSolution = UGameplayStatics::SuggestProjectileVelocity
 	(
 		this,
@@ -60,7 +47,10 @@ void UTankAimingComponent::AimAt(FVector HitLocation, float LaunchSpeed) const
 		false,
 		0,
 		0,
-		ESuggestProjVelocityTraceOption::DoNotTrace	
+		ESuggestProjVelocityTraceOption::DoNotTrace,
+		FCollisionResponseParams(),
+		ActorsToIgnore,
+		true
 	);
 
 
@@ -74,18 +64,16 @@ void UTankAimingComponent::AimAt(FVector HitLocation, float LaunchSpeed) const
 	}
 }
 
-void UTankAimingComponent::SetBarrelReference(UTankBarrel * BarrelToSet)
+void UTankAimingComponent::AimingInitialise(UTankTurret * TurretToSet, UTankBarrel * BarrelToSet)
 {
-	this->Barrel = BarrelToSet;
-}
-
-void UTankAimingComponent::SetTurretReference(UTankTurret * TurretToSet)
-{
-	this->Turret = TurretToSet;
+	if (Turret && Barrel) { return; }
+	Turret = TurretToSet;
+	Barrel = BarrelToSet;
 }
 
 void UTankAimingComponent::MoveBarrelTowards(FVector AimDir) const
 {
+	if (!ensure(Barrel) || !ensure(Turret)) { return; }
 	auto BarrelRotation = Barrel->GetForwardVector().Rotation();
 	auto AimAsRotator = AimDir.Rotation();
 	auto BarrelDeltaRotator = AimAsRotator - BarrelRotation;
@@ -95,14 +83,6 @@ void UTankAimingComponent::MoveBarrelTowards(FVector AimDir) const
 	
 	//TODO FIX the barrel from trembling
 	Turret->Rotate(BarrelDeltaRotator.Yaw);
-	//	if (!FMath::IsNearlyEqual(BarrelDeltaRotator.Yaw, 0, 3)) {
-
-
-
-	//UE_LOG(LogTemp, Warning, TEXT("new rotation of barrel: %s"), *BarrelRotation.ToString());
-
-
-
-	
 }
+
 

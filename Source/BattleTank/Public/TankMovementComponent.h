@@ -7,6 +7,8 @@
 #include "TankMovementComponent.generated.h"
 
 class UTankTrack;
+class AProjectile;
+class UTankBarrel;
 /**
  * 
  */
@@ -31,4 +33,6 @@ private:
 	UTankTrack * LeftTrack = nullptr;
 	UTankTrack * RightTrack = nullptr;
 	float VelocityMagnitude;
+
+
 };

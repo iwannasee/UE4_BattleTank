@@ -3,19 +3,16 @@
 
 #include "TankPlayerController.h"
 #include "BattleTank.h"
-#include "Tank.h"
+#include "TankAimingComponent.h"
 
 void ATankPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	TankAimComponent = GetPawn()->FindComponentByClass<UTankAimingComponent>();
+	if (!ensure(TankAimComponent)) { return; }
 
-	ATank* Tank = GetControlledTank();
-	if (Tank) {
-		UE_LOG(LogTemp, Warning, TEXT("%s is possess by the controller"), *Tank->GetName());
-	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("No tank is possess by the controller"));
-	}
+	FoundAimingComponent(TankAimComponent);
+
 
 }
 
@@ -25,25 +22,16 @@ void ATankPlayerController::Tick(float DeltaTime)
 	AimTowardCrosshair();
 }
 
-ATank* ATankPlayerController::GetControlledTank() const
-{
-	return Cast<ATank>(GetPawn());
-}
 
 void ATankPlayerController::AimTowardCrosshair()
 {
-	if (!GetControlledTank()) { return; }
-
+	if (!ensure(TankAimComponent)) { return; }
 	FVector HitLocation; // Out parameter
 
 	if (GetSightRayHitLocation(HitLocation)) {
-		GetControlledTank()->AimAt(HitLocation);
+		TankAimComponent->AimAt(HitLocation);
+		UE_LOG(LogTemp, Warning, TEXT("Hey %s"), *HitLocation.ToString());
 	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("hit location : NO"));
-	}
-
-
 }
 
 
