@@ -34,7 +34,10 @@ private:
 	bool GetLookDirection(FVector2D ScreenLocation, FVector & LookDirection) const;
 	bool GetLookVectorHitLocation(FVector LookDirection, FVector& HitLocation) const;
 
+	virtual void SetPawn(APawn* InPawn) override;
 
+	UFUNCTION()
+	void OnTankDeath();
 
 
 	UPROPERTY(EditDefaultsOnly)
@@ -45,4 +48,5 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	float LineTraceRange = 1000000.f;
+
 };

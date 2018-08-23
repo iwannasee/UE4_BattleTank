@@ -22,8 +22,11 @@ void ATankAIController::Tick(float DeltaTime)
 		
 		TankAimComponent->AimAt(PlayerTank->GetActorLocation());
 
-		//Fire if ready
-		TankAimComponent-> Fire();
+		//Fire if lock
+		if (TankAimComponent->GetFiringStatus() == EFiringStatus::LOCKING) {
+			TankAimComponent->Fire();
+		}
+
 
 	}
 
@@ -36,5 +39,25 @@ void ATankAIController::BeginPlay()
 	auto ControlledTank = GetPawn();
 	TankAimComponent = ControlledTank->FindComponentByClass<UTankAimingComponent>();
 
+}
+
+void ATankAIController::SetPawn(APawn * InPawn)
+{
+	Super::SetPawn(InPawn);
+	if (InPawn)
+	{
+		auto PossessedTank = Cast<ATank>(InPawn);
+		if (!ensure(PossessedTank)) { return; }
+
+		//subscribe our local method to the tank's death event
+		PossessedTank->OnDeath.AddUniqueDynamic(this, &ATankAIController::OnTankDeath);
+	}
+}
+
+void ATankAIController::OnTankDeath()
+{
+	if (!GetPawn()) { return; }
+
+	GetPawn()->DetachFromControllerPendingDestroy();
 }
 

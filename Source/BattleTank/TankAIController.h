@@ -25,9 +25,14 @@ public:
 	virtual void BeginPlay() override;
 
 private:
-	 UPROPERTY(EditAnywhere)
-	float AcceptanceRadius = 50.f;
-
 	 UTankAimingComponent * TankAimComponent = nullptr;
+	 virtual void SetPawn(APawn* InPawn) override;
+
+	UFUNCTION()
+	void OnTankDeath();
+
+protected:
+	UPROPERTY(EditAnywhere)
+	float AcceptanceRadius = 50.f;
 
 };

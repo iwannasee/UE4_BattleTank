@@ -3,6 +3,7 @@
 
 #include "TankPlayerController.h"
 #include "BattleTank.h"
+#include "Tank.h"
 #include "TankAimingComponent.h"
 
 void ATankPlayerController::BeginPlay()
@@ -25,12 +26,12 @@ void ATankPlayerController::Tick(float DeltaTime)
 
 void ATankPlayerController::AimTowardCrosshair()
 {
+	if (!GetPawn()) { return; }
 	if (!ensure(TankAimComponent)) { return; }
 	FVector HitLocation; // Out parameter
-
-	if (GetSightRayHitLocation(HitLocation)) {
+	bool bGotHitLocation = GetSightRayHitLocation(HitLocation);
+	if (bGotHitLocation){
 		TankAimComponent->AimAt(HitLocation);
-		UE_LOG(LogTemp, Warning, TEXT("Hey %s"), *HitLocation.ToString());
 	}
 }
 
@@ -46,9 +47,7 @@ bool ATankPlayerController::GetSightRayHitLocation(FVector & HitLocation)
 														ViewportSizeY*CrossHairYLocation);
 	FVector CamLookDirection; 
 	if (GetLookDirection(ScreenLocationOfCrossHair, CamLookDirection)) {
-		GetLookVectorHitLocation(CamLookDirection, HitLocation);
-		//UE_LOG(LogTemp, Warning, TEXT("Hit location : %s"), *HitLocation.ToString());
-		return true;
+		return GetLookVectorHitLocation(CamLookDirection, HitLocation);
 	}
 	return false;
 }
@@ -74,14 +73,29 @@ bool ATankPlayerController::GetLookVectorHitLocation(FVector LookDirection, FVec
 		HitResult,
 		StartLocation,
 		EndLocation,
-		ECollisionChannel::ECC_Visibility)
+		ECollisionChannel::ECC_Camera)
 		) 
 	{
 		HitLocation = HitResult.Location;
-
-		//UE_LOG(LogTemp, Warning, TEXT("%s is being hit"),*HitResult.GetActor()->GetName());
 		return true;
 	}
 	HitLocation = FVector(0);
 	return false;
+}
+
+void ATankPlayerController::SetPawn(APawn * InPawn)
+{
+	Super::SetPawn(InPawn);
+
+	if (InPawn) {
+		auto PossessedTank = Cast<ATank>(InPawn);
+		if (!ensure(PossessedTank)) { return; }
+
+		PossessedTank->OnDeath.AddUniqueDynamic(this, &ATankPlayerController::OnTankDeath);
+	}
+}
+
+
+void ATankPlayerController::OnTankDeath() {
+	StartSpectatingOnly();
 }

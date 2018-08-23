@@ -36,18 +36,20 @@ void UTankAimingComponent::BeginPlay()
 
 void UTankAimingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction * ThisTickFunction)
 {
-	
-	if (FPlatformTime::Seconds() - LastFireTime <= ReloadTimeInSeconds) {
-		UE_LOG(LogTemp, Warning, TEXT("RELOADING"));
+
+
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (MaxAmmo <= 0) {
+		FiringStatus = EFiringStatus::OUTOFAMMO;
+	}
+	else if (FPlatformTime::Seconds() - LastFireTime <= ReloadTimeInSeconds) {
 		FiringStatus = EFiringStatus::RELOADING;
 	}
 	else if (IsBarrelMoving()) {
 		FiringStatus = EFiringStatus::AIMING;
-		
 	}
 	else {
 		FiringStatus = EFiringStatus::LOCKING;
-		UE_LOG(LogTemp, Warning, TEXT("LOCKING"));
 	}
 }
 
@@ -82,6 +84,11 @@ void UTankAimingComponent::AimAt(FVector HitLocation)
 	}
 }
 
+EFiringStatus UTankAimingComponent::GetFiringStatus() const
+{
+	return FiringStatus;
+}
+
 void UTankAimingComponent::AimingInitialise(UTankTurret * TurretToSet, UTankBarrel * BarrelToSet)
 {
 	if (Turret && Barrel) { return; }
@@ -96,7 +103,6 @@ bool UTankAimingComponent::IsBarrelMoving()
 	if (BarrelForward.Equals(AimDirection, 0.01f)) {
 		return false;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("AIMING"));
 	return true;
 }
 
@@ -107,12 +113,15 @@ void UTankAimingComponent::MoveBarrelTowards(FVector AimDir) const
 	auto BarrelRotation = Barrel->GetForwardVector().Rotation();
 	auto AimAsRotator = AimDir.Rotation();
 	auto BarrelDeltaRotator = AimAsRotator - BarrelRotation;
-	//UE_LOG(LogTemp, Warning, TEXT("Aim As Rot: %s"), *AimAsRotator.ToString());
 
 	Barrel->Elevate(BarrelDeltaRotator.Pitch);
 	
 	//TODO FIX the barrel from trembling
-	Turret->Rotate(BarrelDeltaRotator.Yaw);	
+	if (FMath::Abs( BarrelDeltaRotator.Yaw) > 180.f) {
+		Turret->Rotate(180-BarrelDeltaRotator.Yaw);
+	}else{
+		Turret->Rotate(BarrelDeltaRotator.Yaw);	
+	}
 }
 
 void UTankAimingComponent::Fire()
@@ -120,9 +129,8 @@ void UTankAimingComponent::Fire()
 	
 	if (FiringStatus != EFiringStatus::RELOADING) {
 		bool isReloaded = (FPlatformTime::Seconds() - LastFireTime) > ReloadTimeInSeconds;
-		UE_LOG(LogTemp, Warning, TEXT("FIRE!!!!!"));
-
-		if (isReloaded && bCanShoot) {
+		
+		if (isReloaded && bCanShoot  && FiringStatus != EFiringStatus::OUTOFAMMO) {
 			//FiringStatus = EFiringStatus::LOCKING;
 			if (!ensure(ProjectileBlueprint)) { return; }
 			if (!ensure(Barrel)) { return; }
@@ -136,6 +144,17 @@ void UTankAimingComponent::Fire()
 			Projectile->Launch(LaunchSpeed);
 
 			LastFireTime = FPlatformTime::Seconds();
+
+			MaxAmmo = MaxAmmo - 1;
+			
 		}
+
+	
 	}
+
+}
+
+int32 UTankAimingComponent::GetMaxAmmo() const
+{
+	return MaxAmmo;
 }

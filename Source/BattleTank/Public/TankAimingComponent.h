@@ -17,7 +17,8 @@ UENUM()
 enum class EFiringStatus : uint8 {
 	RELOADING,
 	AIMING,
-	LOCKING
+	LOCKING,
+	OUTOFAMMO
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -32,16 +33,21 @@ public:
 
 	void AimAt(FVector HitLocation);
 
+	EFiringStatus GetFiringStatus() const;
 	UFUNCTION(BlueprintCallable, Category = Action)
 		void Fire();
 
+	UFUNCTION(BlueprintCallable, Category = Action)
+		int32 GetMaxAmmo() const;
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	EFiringStatus FiringStatus = EFiringStatus::RELOADING;
 	// Called when the game starts
 	virtual void BeginPlay() override;
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
+	UPROPERTY(EditDefaultsOnly, Category = Setup)
+	int32 MaxAmmo = 3;
 
 private:
 	UFUNCTION(BlueprintCallable, Category = Setup)
@@ -68,6 +74,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Setup)
 		TSubclassOf<AProjectile> ProjectileBlueprint;
 
+	
 	double LastFireTime = 0;
 
 };
